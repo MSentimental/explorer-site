@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Google Earth - Redirect</title>
+  <style>
+    body {
+      background: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
+      text-align: center;
+    }
+  </style>
+</head>
+<body onclick="launch()">
+  <h1>Click anywhere to continue</h1>
+  <script>
+    function launch() {
+      document.body.onclick = null;
+
+      const popup = window.open('https://msentimental.github.io/explorer-site/Google-Earth', '_blank');
+
+      if (popup) {
+        setTimeout(() => {
+          window.location.href = 'https://google.com';
+        }, 150);
+      } else {
+        document.body.innerHTML = '<h1>Popup blocked! Please allow popups and try again.</h1>';
+      }
+    }
+  </script>
+</body>
+</html>
