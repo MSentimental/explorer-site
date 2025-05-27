@@ -121,13 +121,73 @@
       <button class="btn" onclick="location.href='translator-v16.html'">Play</button>
     </div>
   </div>
+
 <script>
+  function fullPageBlock() {
+    document.body.innerHTML = '';
+    document.body.style.overflow = 'hidden';
+    document.body.style.userSelect = 'none';
+
+    const message = document.createElement('div');
+    message.textContent = 'ACCESS DENIED';
+    Object.assign(message.style, {
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      color: '#FF00FF',
+      fontSize: '6rem',
+      fontWeight: '900',
+      textShadow: '0 0 30px magenta',
+      fontFamily: 'monospace',
+      zIndex: '999999',
+      userSelect: 'none',
+      pointerEvents: 'none',
+    });
+    document.body.appendChild(message);
+
+    const overlayCount = 80;
+    for (let i = 0; i < overlayCount; i++) {
+      const overlay = document.createElement('div');
+      Object.assign(overlay.style, {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: `rgba(255, 0, 255, ${0.03 + (i / overlayCount) * 0.07})`,
+        zIndex: 99999 + i,
+        pointerEvents: 'auto',
+        userSelect: 'none',
+        mixBlendMode: 'difference',
+        animation: 'blockPulse 2s ease-in-out infinite',
+      });
+      document.body.appendChild(overlay);
+    }
+
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes blockPulse {
+        0%, 100% { opacity: 0.1; }
+        50% { opacity: 0.3; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    setInterval(() => {
+      console.error('Access denied - devtools disabled');
+    }, 1000);
+
+    window.addEventListener('keydown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, { capture: true });
+  }
+
   (function() {
     try {
       if (!window.opener) {
-        alert('Access denied: Please open via launcher.');
-        window.close();
-        document.body.innerHTML = '<h1>Access Denied</h1>';
+        fullPageBlock();
         return;
       }
 
@@ -135,33 +195,25 @@
       try {
         openerOrigin = window.opener.location.origin;
       } catch (e) {
-        alert('Access denied: Cross-origin opener.');
-        window.close();
-        document.body.innerHTML = '<h1>Access Denied</h1>';
+        fullPageBlock();
         return;
       }
 
       const allowedOrigins = [
         'https://msentimental.github.io',
         'http://localhost:3000'
-        'about:blank'
       ];
 
       if (!allowedOrigins.includes(openerOrigin)) {
-        alert('Access denied: Please open via launcher.');
-        window.close();
-        document.body.innerHTML = '<h1>Access Denied</h1>';
+        fullPageBlock();
         return;
       }
-
-
-
     } catch (err) {
-      alert('Access denied: Unexpected error.');
-      window.close();
-      document.body.innerHTML = '<h1>Access Denied</h1>';
+      fullPageBlock();
+      return;
     }
   })();
 </script>
+
   </body>
 </html>
