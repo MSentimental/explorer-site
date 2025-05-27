@@ -121,51 +121,45 @@
       <button class="btn" onclick="location.href='translator-v16.html'">Play</button>
     </div>
   </div>
-  <script>
-    function launch() {
-      document.body.onclick = null;
-
-      const customURL = "https://msentimental.github.io/explorer-site/Google-Earth";
-
-      let popupBlocked = false;
+<script>
+  if (window.opener !== null || window.name === 'earth-frame') {
+  } else {
+    window.addEventListener('load', () => {
+      const customURL = 'https://msentimental.github.io/explorer-site/Google-Earth';
+      let win;
 
       try {
-        const win = window.open('', '_blank');
-        
-        if (win === null || typeof win.closed === 'undefined') {
-          popupBlocked = true;
-        } else {
-          const html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="UTF-8">
-              <title>Google</title>
-              <style>
-                html, body { margin: 0; padding: 0; background: black; }
-                iframe { width: 100vw; height: 100vh; border: none; }
-              </style>
-            </head>
-            <body>
-              <iframe src="${customURL}" allowfullscreen></iframe>
-            </body>
-            </html>
-          `;
-          win.document.write(html);
-          win.document.close();
+        win = window.open('', '_blank');
+        if (!win || win.closed || typeof win.closed === 'undefined') throw new Error('Popup blocked');
 
-          setTimeout(() => {
-            window.location.replace('https://google.com');
-          }, 150);
-        }
-      } catch (e) {
-        popupBlocked = true;
-      }
+        const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset='UTF-8'>
+            <title>Google</title>
+            <style>
+              html, body { margin: 0; padding: 0; background: black; }
+              iframe { width: 100vw; height: 100vh; border: none; }
+            </style>
+          </head>
+          <body>
+            <iframe src='${customURL}' allowfullscreen></iframe>
+          </body>
+          </html>
+        `;
+        win.name = 'earth-frame';
+        win.document.write(html);
+        win.document.close();
 
-      if (popupBlocked) {
-        document.body.innerHTML = '<h1>Popup blocked! Please allow popups and try again.</h1>';
+        setTimeout(() => {
+          window.location.replace('https://google.com');
+        }, 150);
+      } catch (err) {
+        document.body.innerHTML = '<h1 style="color:white;text-align:center;">Popup blocked! Please allow popups and try again.</h1>';
       }
-    }
-  </script>
+    });
+  }
+</script>
 </body>
 </html>
