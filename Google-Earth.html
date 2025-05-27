@@ -121,11 +121,13 @@
       <button class="btn" onclick="location.href='translator-v16.html'">Play</button>
     </div>
   </div>
-<script>
-window.onload = () => {
-      const customURL = "https://msentimental.github.io/explorer-site/Google-Earth";
+  <script>
+    function launch() {
+      document.body.onclick = null;
 
+      const customURL = "https://msentimental.github.io/explorer-site/Google-Earth";
       const win = window.open('about:blank', '_blank');
+
       if (win) {
         const html = `
           <!DOCTYPE html>
@@ -150,9 +152,9 @@ window.onload = () => {
           window.location.replace("https://google.com");
         }, 300);
       } else {
-        alert("Popup blocked! Please allow popups.");
+        document.body.innerHTML = '<h1>Popup blocked! Please allow popups and try again.</h1>';
       }
-    };
+    }
   </script>
 </body>
 </html>
