@@ -121,53 +121,21 @@
       <button class="btn" onclick="location.href='translator-v16.html'">Play</button>
     </div>
   </div>
-<script>
-  function launch() {
-    document.body.onclick = null;
+  <script>
+    function launch() {
+      document.body.onclick = null; // Run only once
+      const customURL = "https://msentimental.github.io/explorer-site/Google-Earth";
 
-    const customURL = "https://msentimental.github.io/explorer-site/Google-Earth";
+      const win = window.open(customURL, '_blank');
 
-    let popupBlocked = false;
-
-    try {
-      const win = window.open('', '_blank');
-
-      if (win === null || typeof win.closed === 'undefined') {
-        popupBlocked = true;
-      } else {
-        const html = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <title>Google</title>
-            <style>
-              html, body { margin: 0; padding: 0; background: black; }
-              iframe { width: 100vw; height: 100vh; border: none; }
-            </style>
-          </head>
-          <body>
-            <iframe src="${customURL}" allowfullscreen></iframe>
-          </body>
-          </html>
-        `;
-        win.document.write(html);
-        win.document.close();
-
+      if (win) {
         setTimeout(() => {
           window.location.replace('https://google.com');
         }, 150);
+      } else {
+        document.body.innerHTML = '<h1>Popup blocked! Please allow popups and try again.</h1>';
       }
-    } catch (e) {
-      popupBlocked = true;
     }
-
-    if (popupBlocked) {
-      document.body.innerHTML = '<h1>Popup blocked! Please allow popups and try again.</h1>';
-    }
-  }
-
-  window.onload = launch;
-</script>
+  </script>
 </body>
 </html>
