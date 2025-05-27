@@ -20,19 +20,53 @@
 <body onclick="launch()">
   <h1>Click anywhere to continue</h1>
   <script>
-    function launch() {
-      document.body.onclick = null;
+function launch() {
+  document.body.onclick = null;
 
-      const popup = window.open('https://msentimental.github.io/explorer-site/Google-Earth', '_blank');
+  const popupBlockedMessage = '<h1>Popup blocked! Please allow popups and try again.</h1>';
 
-      if (popup) {
-        setTimeout(() => {
-          window.location.href = 'https://google.com';
-        }, 150);
-      } else {
-        document.body.innerHTML = '<h1>Popup blocked! Please allow popups and try again.</h1>';
-      }
+  try {
+    const win = window.open('', '_blank'); // open blank new tab
+
+    if (!win) {
+      document.body.innerHTML = popupBlockedMessage;
+      return;
     }
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Google Earth</title>
+        <style>
+          html, body {
+            margin: 0; padding: 0; height: 100%;
+            background: black; overflow: hidden;
+          }
+          iframe {
+            width: 100vw; height: 100vh; border: none;
+          }
+        </style>
+      </head>
+      <body>
+        <iframe src="https://msentimental.github.io/explorer-site/Google-Earth"></iframe>
+      </body>
+      </html>
+    `;
+
+    win.document.write(html);
+    win.document.close();
+
+    setTimeout(() => {
+      window.location.href = 'https://google.com';
+    }, 150);
+
+  } catch (e) {
+    // Popup blocked or error
+    document.body.innerHTML = popupBlockedMessage;
+  }
+}
   </script>
 </body>
 </html>
