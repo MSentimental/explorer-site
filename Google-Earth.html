@@ -131,9 +131,9 @@
         return;
       }
 
-      let openerHref = '';
+      let openerOrigin = '';
       try {
-        openerHref = window.opener.location.href;
+        openerOrigin = window.opener.location.origin;
       } catch (e) {
         alert('Access denied: Cross-origin opener.');
         window.close();
@@ -141,18 +141,19 @@
         return;
       }
 
-      const allowedOpeners = [
-        'https://msentimental.github.io/explorer-site/Google',
-        'http://localhost:3000/Google',
+      const allowedOrigins = [
+        'https://msentimental.github.io',
+        'http://localhost:3000'
         'about:blank'
       ];
 
-      if (!allowedOpeners.includes(openerHref)) {
+      if (!allowedOrigins.includes(openerOrigin)) {
         alert('Access denied: Please open via launcher.');
         window.close();
         document.body.innerHTML = '<h1>Access Denied</h1>';
         return;
       }
+
 
 
     } catch (err) {
