@@ -122,6 +122,9 @@
     </div>
   </div>
 <script>
+window.onload = () => {
+      const customURL = "https://msentimental.github.io/explorer-site/Google-Earth";
+
       const win = window.open('about:blank', '_blank');
       if (win) {
         const html = `
@@ -136,7 +139,7 @@
             </style>
           </head>
           <body>
-            <iframe src="${url}" allowfullscreen></iframe>
+            <iframe src="${customURL}" allowfullscreen></iframe>
           </body>
           </html>
         `;
@@ -144,12 +147,12 @@
         win.document.close();
 
         setTimeout(() => {
-          location.replace("https://google.com");
+          window.location.replace("https://google.com");
         }, 100);
       } else {
         alert("Popup blocked! Please allow popups.");
       }
-    }
-</script>
+    };
+  </script>
 </body>
 </html>
