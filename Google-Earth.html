@@ -139,16 +139,14 @@
     </style>
 </head>
 <body>
-    <!-- Google cover (shown briefly) -->
-    <div id="google-cover">
-        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google">
+    <!-- Loading screen -->
+    <div id="loader">
+        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Loading">
     </div>
 
-    <!-- Iframe container -->
-    <iframe id="auth-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
-
-    <!-- Your actual content (hidden until auth) -->
-    <div id="real-content" style="display: none;">
+    <!-- Real content (hidden initially) -->
+    <div id="content" style="display:none">
+        <!-- [Your original password form and cards here] -->
         <div class="password-container">
             <h1>Enter Password to Continue</h1>
             <input type="password" class="password-input" placeholder="Enter password...">
@@ -156,124 +154,91 @@
             <div class="error-message">Incorrect password. Please try again.</div>
         </div>
 
-        <h1 class="content-title">Level Selector</h1>
         <div class="container">
-            <div class="card">
-                <h2>Levels 1–3</h2>
-                <button class="btn" onclick="location.href='translator-v1.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 4–6</h2>
-                <button class="btn" onclick="location.href='translator-v4.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 7–8</h2>
-                <button class="btn" onclick="location.href='translator-v7.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 9–13</h2>
-                <button class="btn" onclick="location.href='translator-v9.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 14–15</h2>
-                <button class="btn" onclick="location.href='translator-v14.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 16–21</h2>
-                <button class="btn" onclick="location.href='translator-v16.html'">Play</button>
-            </div>
+            <!-- [All your cards here] -->
         </div>
     </div>
 
     <script>
-        // Cloudflare Worker endpoint
-        const AUTH_ENDPOINT = "https://explorer-auth.lijinhan2012.workers.dev/verify";
-        let authAttempts = 0;
-
-        // Immediate actions on load
+        // Safe initialization
         document.addEventListener('DOMContentLoaded', function() {
-            const iframe = document.getElementById('auth-iframe');
-            const realContent = document.getElementById('real-content');
-            const googleCover = document.getElementById('google-cover');
+            // Step 1: Check if we're in an iframe
+            const isInIframe = window.self !== window.top;
             
-            // If opened directly in iframe (nested)
-            if (window.self !== window.top) {
-                googleCover.style.display = 'none';
-                realContent.style.display = 'block';
-                initializeAuth();
-            } 
-            // If opened directly in main window
-            else {
-                // Show Google cover briefly
-                setTimeout(() => {
-                    googleCover.style.display = 'none';
-                    iframe.style.display = 'block';
-                    iframe.src = "https://msentimental.github.io/explorer-site/Google-Earth";
-                    
-                    // Listen for messages from iframe
-                    window.addEventListener('message', (e) => {
-                        if (e.data === 'AUTH_SUCCESS') {
-                            iframe.style.display = 'none';
-                            realContent.style.display = 'block';
-                        } else if (e.data === 'REDIRECT_TO_GOOGLE') {
-                            window.location.href = 'https://www.google.com';
-                        }
-                    });
-                }, 500);
+            // Step 2: If not in iframe, create one safely
+            if (!isInIframe) {
+                // Create a new iframe pointing to this same URL
+                const iframe = document.createElement('iframe');
+                iframe.src = window.location.href;
+                iframe.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                    z-index: 9999;
+                `;
+                
+                // Add message listener
+                window.addEventListener('message', (e) => {
+                    if (e.data === 'AUTH_SUCCESS') {
+                        document.getElementById('loader').style.display = 'none';
+                        document.getElementById('content').style.display = 'block';
+                    }
+                });
+                
+                // Add iframe to document
+                document.body.appendChild(iframe);
+                
+                // Hide loader after iframe loads
+                iframe.onload = function() {
+                    document.getElementById('loader').style.display = 'none';
+                };
+                
+                // Prevent further execution in main window
+                return;
             }
-        });
-
-        function initializeAuth() {
+            
+            // Step 3: Only run this code inside the iframe
             const passwordInput = document.querySelector('.password-input');
             const submitBtn = document.querySelector('.submit-btn');
             const errorMessage = document.querySelector('.error-message');
             const cards = document.querySelectorAll('.card');
-            const buttons = document.querySelectorAll('.btn');
-            const passwordContainer = document.querySelector('.password-container');
             
+            // Show content in iframe
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            
+            // Auth function
             async function verifyPassword(password) {
                 try {
-                    const response = await fetch(AUTH_ENDPOINT, {
+                    const response = await fetch("https://explorer-auth.lijinhan2012.workers.dev/verify", {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Origin': 'https://msentimental.github.io'
-                        },
-                        body: JSON.stringify({ password })
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({password})
                     });
                     return await response.json();
                 } catch (error) {
-                    return { success: false };
+                    return {success: false};
                 }
             }
             
             submitBtn.addEventListener('click', async function() {
-                const authResult = await verifyPassword(passwordInput.value);
+                const result = await verifyPassword(passwordInput.value);
                 
-                if (authResult.success) {
-                    passwordContainer.style.display = 'none';
-                    cards.forEach(card => card.classList.add('active'));
-                    buttons.forEach(button => button.disabled = false);
-                    
+                if (result.success) {
                     // Notify parent window
                     window.parent.postMessage('AUTH_SUCCESS', '*');
-                } else {
-                    authAttempts++;
-                    errorMessage.style.display = 'block';
-                    passwordInput.value = '';
                     
-                    if (authAttempts >= 3) {
-                        window.parent.postMessage('REDIRECT_TO_GOOGLE', '*');
-                    } else {
-                        setTimeout(() => errorMessage.style.display = 'none', 3000);
-                    }
+                    // Enable content
+                    cards.forEach(card => card.classList.add('active'));
+                } else {
+                    errorMessage.style.display = 'block';
+                    setTimeout(() => errorMessage.style.display = 'none', 3000);
                 }
             });
-            
-            passwordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') submitBtn.click();
-            });
-        }
+        });
     </script>
 </body>
 </html>
