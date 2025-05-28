@@ -244,17 +244,19 @@
                             <!DOCTYPE html>
                             <html>
                             <head>
-                                <title>Loading...</title>
-                                <script>
-                                    setTimeout(function() {
-                                        location.href = '${window.location.href}';
-                                    }, 50);
-                                </script>
+                                <title>Content</title>
+                                <link rel="stylesheet" href="${window.location.href}">
                             </head>
                             <body>
-                                <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-                                    Loading content...
+                                <div id="real-content">
+                                    <!-- Your card content will be loaded here -->
                                 </div>
+                                <script>
+                                    // Reload to actual content page
+                                    setTimeout(() => {
+                                        location.href = '${window.location.href}';
+                                    }, 50);
+                                <\/script>
                             </body>
                             </html>
                         `);
