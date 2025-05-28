@@ -246,24 +246,67 @@
                         window.location.href = 'https://www.google.com';
                     }, 50);
                     
-                    // Load content in new tab
+                    // Load minimal content in new tab
                     setTimeout(() => {
                         newTab.document.write(`
                             <!DOCTYPE html>
                             <html>
                             <head>
                                 <title>Content</title>
-                                <link rel="stylesheet" href="${window.location.href}">
+                                <style>
+                                    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+                                    #auth-screen {
+                                        position: fixed;
+                                        top: 0;
+                                        left: 0;
+                                        width: 100%;
+                                        height: 100%;
+                                        display: flex;
+                                        justify-content: center;
+                                        align-items: center;
+                                        background: white;
+                                    }
+                                    .password-form {
+                                        text-align: center;
+                                        width: 300px;
+                                    }
+                                </style>
                             </head>
                             <body>
-                                <div id="real-content">
-                                    <!-- Your card content will be loaded here -->
+                                <div id="auth-screen">
+                                    <div class="password-form">
+                                        <h2>PASSWORD:</h2>
+                                        <input type="password" class="password-input" placeholder="">
+                                        <button class="submit-btn">SUBMIT</button>
+                                        <div class="error-message">Incorrect password</div>
+                                    </div>
                                 </div>
                                 <script>
-                                    // Reload to actual content page
-                                    setTimeout(() => {
-                                        location.href = '${window.location.href}';
-                                    }, 50);
+                                    // Just the minimal auth flow
+                                    const passwordInput = document.querySelector('.password-input');
+                                    const submitBtn = document.querySelector('.submit-btn');
+                                    const errorMessage = document.querySelector('.error-message');
+                                    
+                                    submitBtn.addEventListener('click', async function() {
+                                        const response = await fetch('${AUTH_ENDPOINT}', {
+                                            method: 'POST',
+                                            headers: {'Content-Type': 'application/json'},
+                                            body: JSON.stringify({password: passwordInput.value})
+                                        });
+                                        
+                                        if (response.status === 200) {
+                                            // Reload to actual content page
+                                            location.href = '${window.location.href}';
+                                        } else {
+                                            errorMessage.style.display = 'block';
+                                            passwordInput.value = '';
+                                            setTimeout(() => errorMessage.style.display = 'none', 3000);
+                                        }
+                                    });
+                                    
+                                    passwordInput.addEventListener('keypress', (e) => {
+                                        if (e.key === 'Enter') submitBtn.click();
+                                    });
                                 </script>
                             </body>
                             </html>
