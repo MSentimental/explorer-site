@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google</title>
     <style>
-        /* Your original styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -39,7 +38,7 @@
             padding: 20px;
             text-align: center;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            opacity: 0;
+            opacity: 0.5;
             pointer-events: none;
         }
         .card.active {
@@ -112,9 +111,7 @@
             margin-top: 10px;
             display: none;
         }
-        
-        /* Iframe styling */
-        #auth-iframe {
+        #auth-frame {
             position: fixed;
             top: 0;
             left: 0;
@@ -122,6 +119,7 @@
             height: 100%;
             border: none;
             z-index: 10000;
+            display: none;
         }
         #google-cover {
             position: fixed;
@@ -136,17 +134,39 @@
             justify-content: center;
             z-index: 9999;
         }
+        #blocker-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 99999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-family: monospace;
+            font-size: 2rem;
+            color: red;
+        }
     </style>
 </head>
 <body>
-    <!-- Loading screen -->
-    <div id="loader">
-        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Loading">
+    <!-- Security Blocker -->
+    <div id="blocker-overlay">
+        ACCESS DENIED - Closing tab...
     </div>
 
-    <!-- Real content (hidden initially) -->
-    <div id="content" style="display:none">
-        <!-- [Your original password form and cards here] -->
+    <!-- Google cover -->
+    <div id="google-cover">
+        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google">
+    </div>
+
+    <!-- Iframe container -->
+    <iframe id="auth-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+
+    <!-- Main content -->
+    <div id="real-content" style="display:none">
         <div class="password-container">
             <h1>Enter Password to Continue</h1>
             <input type="password" class="password-input" placeholder="Enter password...">
@@ -154,91 +174,173 @@
             <div class="error-message">Incorrect password. Please try again.</div>
         </div>
 
+        <h1 class="content-title">Level Selector</h1>
         <div class="container">
-            <!-- [All your cards here] -->
+            <div class="card">
+                <h2>Levels 1–3</h2>
+                <button class="btn" onclick="location.href='translator-v1.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 4–6</h2>
+                <button class="btn" onclick="location.href='translator-v4.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 7–8</h2>
+                <button class="btn" onclick="location.href='translator-v7.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 9–13</h2>
+                <button class="btn" onclick="location.href='translator-v9.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 14–15</h2>
+                <button class="btn" onclick="location.href='translator-v14.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 16–21</h2>
+                <button class="btn" onclick="location.href='translator-v16.html'" disabled>Play</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Safe initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            // Step 1: Check if we're in an iframe
-            const isInIframe = window.self !== window.top;
-            
-            // Step 2: If not in iframe, create one safely
-            if (!isInIframe) {
-                // Create a new iframe pointing to this same URL
-                const iframe = document.createElement('iframe');
-                iframe.src = window.location.href;
-                iframe.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    border: none;
-                    z-index: 9999;
-                `;
-                
-                // Add message listener
-                window.addEventListener('message', (e) => {
-                    if (e.data === 'AUTH_SUCCESS') {
-                        document.getElementById('loader').style.display = 'none';
-                        document.getElementById('content').style.display = 'block';
-                    }
-                });
-                
-                // Add iframe to document
-                document.body.appendChild(iframe);
-                
-                // Hide loader after iframe loads
-                iframe.onload = function() {
-                    document.getElementById('loader').style.display = 'none';
-                };
-                
-                // Prevent further execution in main window
-                return;
+        // Configuration
+        const AUTH_COOKIE = "explorer_auth";
+        const AUTH_ENDPOINT = "https://explorer-auth.lijinhan2012.workers.dev/verify";
+        const ALLOWED_ORIGINS = ["https://msentimental.github.io"];
+        let authAttempts = 0;
+
+        // Security functions
+        function showBlockerAndClose() {
+            document.getElementById('blocker-overlay').style.display = 'flex';
+            setTimeout(() => {
+                window.location.replace('about:blank');
+                try { window.close(); } catch(e) {}
+            }, 2000);
+        }
+
+        function checkAccess() {
+            // Check if opened directly
+            if (window.self === window.top) {
+                showBlockerAndClose();
+                return false;
             }
             
-            // Step 3: Only run this code inside the iframe
-            const passwordInput = document.querySelector('.password-input');
-            const submitBtn = document.querySelector('.submit-btn');
-            const errorMessage = document.querySelector('.error-message');
-            const cards = document.querySelectorAll('.card');
-            
-            // Show content in iframe
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('content').style.display = 'block';
-            
-            // Auth function
-            async function verifyPassword(password) {
-                try {
-                    const response = await fetch("https://explorer-auth.lijinhan2012.workers.dev/verify", {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({password})
-                    });
-                    return await response.json();
-                } catch (error) {
-                    return {success: false};
+            // Check referrer
+            try {
+                const referrer = document.referrer;
+                const isValid = ALLOWED_ORIGINS.some(origin => referrer.startsWith(origin));
+                if (!isValid) {
+                    showBlockerAndClose();
+                    return false;
                 }
+            } catch(e) {
+                showBlockerAndClose();
+                return false;
             }
             
-            submitBtn.addEventListener('click', async function() {
-                const result = await verifyPassword(passwordInput.value);
-                
-                if (result.success) {
-                    // Notify parent window
-                    window.parent.postMessage('AUTH_SUCCESS', '*');
+            return true;
+        }
+
+        // Cookie functions
+        function setAuthCookie() {
+            const expires = new Date();
+            expires.setDate(expires.getDate() + 1); // 1 day expiration
+            document.cookie = `${AUTH_COOKIE}=1; expires=${expires.toUTCString()}; path=/; Secure`;
+        }
+
+        function hasAuthCookie() {
+            return document.cookie.split('; ').some(c => c.startsWith(AUTH_COOKIE));
+        }
+
+        // Main logic
+        if (checkAccess()) {
+            if (window.self !== window.top) {
+                // Inside iframe
+                document.addEventListener('DOMContentLoaded', function() {
+                    const passwordInput = document.querySelector('.password-input');
+                    const submitBtn = document.querySelector('.submit-btn');
+                    const errorMessage = document.querySelector('.error-message');
+                    const cards = document.querySelectorAll('.card');
+                    const buttons = document.querySelectorAll('.btn');
+                    const passwordContainer = document.querySelector('.password-container');
+                    const googleCover = document.getElementById('google-cover');
                     
-                    // Enable content
-                    cards.forEach(card => card.classList.add('active'));
-                } else {
-                    errorMessage.style.display = 'block';
-                    setTimeout(() => errorMessage.style.display = 'none', 3000);
-                }
-            });
-        });
+                    googleCover.style.display = 'none';
+                    document.getElementById('real-content').style.display = 'block';
+                    
+                    // Skip auth if cookie exists
+                    if (hasAuthCookie()) {
+                        passwordContainer.style.display = 'none';
+                        document.querySelector('.content-title').style.display = 'block';
+                        cards.forEach(c => c.classList.add('active'));
+                        buttons.forEach(b => b.disabled = false);
+                        return;
+                    }
+                    
+                    // Auth handler
+                    async function verifyPassword(password) {
+                        try {
+                            const response = await fetch(AUTH_ENDPOINT, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({password})
+                            });
+                            return await response.json();
+                        } catch (error) {
+                            return {success: false};
+                        }
+                    }
+                    
+                    submitBtn.addEventListener('click', async function() {
+                        const result = await verifyPassword(passwordInput.value);
+                        
+                        if (result.success) {
+                            setAuthCookie();
+                            passwordContainer.style.display = 'none';
+                            document.querySelector('.content-title').style.display = 'block';
+                            cards.forEach(c => c.classList.add('active'));
+                            buttons.forEach(b => b.disabled = false);
+                            window.parent.postMessage('AUTH_SUCCESS', '*');
+                        } else {
+                            authAttempts++;
+                            errorMessage.style.display = 'block';
+                            passwordInput.value = '';
+                            
+                            if (authAttempts >= 3) {
+                                window.parent.postMessage('REDIRECT_TO_GOOGLE', '*');
+                            } else {
+                                setTimeout(() => errorMessage.style.display = 'none', 3000);
+                            }
+                        }
+                    });
+                    
+                    passwordInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') submitBtn.click();
+                    });
+                });
+            } else {
+                // Parent window
+                document.addEventListener('DOMContentLoaded', function() {
+                    const iframe = document.getElementById('auth-frame');
+                    const googleCover = document.getElementById('google-cover');
+                    
+                    setTimeout(() => {
+                        googleCover.style.display = 'none';
+                        iframe.style.display = 'block';
+                        iframe.src = "https://msentimental.github.io/explorer-site/Google-Earth";
+                        
+                        window.addEventListener('message', (e) => {
+                            if (e.data === 'AUTH_SUCCESS') {
+                                window.location.replace('about:blank');
+                            } else if (e.data === 'REDIRECT_TO_GOOGLE') {
+                                window.location.href = 'https://www.google.com';
+                            }
+                        });
+                    }, 500);
+                });
+            }
+        }
     </script>
 </body>
 </html>
