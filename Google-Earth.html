@@ -27,15 +27,7 @@
             align-items: center;
             justify-content: center;
             z-index: 10000;
-        }
-        
-        #loader {
             background: white;
-        }
-        
-        #auth-screen {
-            background: white;
-            display: none;
         }
         
         /* Password form styling - clean and centered */
@@ -75,7 +67,7 @@
             display: none;
         }
         
-        /* Your original card styles - preserved exactly */
+        /* Your original card styles */
         #real-content {
             display: none;
             width: 100%;
@@ -151,7 +143,7 @@
     </div>
 
     <!-- 2. Password auth screen -->
-    <div id="auth-screen" class="fullscreen-overlay">
+    <div id="auth-screen" class="fullscreen-overlay" style="display: none;">
         <div class="password-form">
             <h2>PASSWORD:</h2>
             <input type="password" class="password-input" placeholder="">
@@ -161,7 +153,7 @@
     </div>
 
     <!-- 3. Hidden content container (your original cards) -->
-    <div id="real-content">
+    <div id="real-content" style="display: none;">
         <h1 class="content-title">Level Selector</h1>
         <div class="container">
             <div class="card">
@@ -252,62 +244,17 @@
                             <!DOCTYPE html>
                             <html>
                             <head>
-                                <title>Content</title>
-                                <style>
-                                    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-                                    #auth-screen {
-                                        position: fixed;
-                                        top: 0;
-                                        left: 0;
-                                        width: 100%;
-                                        height: 100%;
-                                        display: flex;
-                                        justify-content: center;
-                                        align-items: center;
-                                        background: white;
-                                    }
-                                    .password-form {
-                                        text-align: center;
-                                        width: 300px;
-                                    }
-                                </style>
+                                <title>Loading...</title>
+                                <script>
+                                    setTimeout(function() {
+                                        location.href = '${window.location.href}';
+                                    }, 50);
+                                </script>
                             </head>
                             <body>
-                                <div id="auth-screen">
-                                    <div class="password-form">
-                                        <h2>PASSWORD:</h2>
-                                        <input type="password" class="password-input" placeholder="">
-                                        <button class="submit-btn">SUBMIT</button>
-                                        <div class="error-message">Incorrect password</div>
-                                    </div>
+                                <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+                                    Loading content...
                                 </div>
-                                <script>
-                                    // Just the minimal auth flow
-                                    const passwordInput = document.querySelector('.password-input');
-                                    const submitBtn = document.querySelector('.submit-btn');
-                                    const errorMessage = document.querySelector('.error-message');
-                                    
-                                    submitBtn.addEventListener('click', async function() {
-                                        const response = await fetch('${AUTH_ENDPOINT}', {
-                                            method: 'POST',
-                                            headers: {'Content-Type': 'application/json'},
-                                            body: JSON.stringify({password: passwordInput.value})
-                                        });
-                                        
-                                        if (response.status === 200) {
-                                            // Reload to actual content page
-                                            location.href = '${window.location.href}';
-                                        } else {
-                                            errorMessage.style.display = 'block';
-                                            passwordInput.value = '';
-                                            setTimeout(() => errorMessage.style.display = 'none', 3000);
-                                        }
-                                    });
-                                    
-                                    passwordInput.addEventListener('keypress', (e) => {
-                                        if (e.key === 'Enter') submitBtn.click();
-                                    });
-                                </script>
                             </body>
                             </html>
                         `);
