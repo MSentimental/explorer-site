@@ -175,57 +175,52 @@
 
         <h1 class="content-title">Level Selector</h1>
         <div class="container">
-            <!-- Your cards here -->
+                      <div class="card">
+                <h2>Levels 1–3</h2>
+                <button class="btn" onclick="location.href='translator-v1.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 4–6</h2>
+                <button class="btn" onclick="location.href='translator-v4.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 7–8</h2>
+                <button class="btn" onclick="location.href='translator-v7.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 9–13</h2>
+                <button class="btn" onclick="location.href='translator-v9.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 14–15</h2>
+                <button class="btn" onclick="location.href='translator-v14.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 16–21</h2>
+                <button class="btn" onclick="location.href='translator-v16.html'" disabled>Play</button>
+            </div>
         </div>
     </div>
 
     <script>
         // Configuration
-        const AUTH_COOKIE = "explorer_auth";
+        const AUTH_COOKIE = "explorer_auth_v2";
         const AUTH_ENDPOINT = "https://explorer-auth.lijinhan2012.workers.dev/verify";
-        const ALLOWED_ORIGINS = ["https://msentimental.github.io"];
+        const SITE_URL = "https://msentimental.github.io/explorer-site/Google-Earth";
         let authAttempts = 0;
 
         // Cookie functions (1 hour expiration)
         function setAuthCookie() {
             const expires = new Date();
-            expires.setTime(expires.getTime() + (60 * 60 * 1000)); // 1 hour
+            expires.setTime(expires.getTime() + (60 * 60 * 1000));
             document.cookie = `${AUTH_COOKIE}=1; expires=${expires.toUTCString()}; path=/; Secure`;
         }
 
         function hasValidAuthCookie() {
-            const cookie = document.cookie.split('; ')
-                .find(row => row.startsWith(`${AUTH_COOKIE}=`));
-            return !!cookie; // Returns true if cookie exists
+            return document.cookie.split('; ').some(row => row.startsWith(`${AUTH_COOKIE}=`));
         }
 
-        function deleteAuthCookie() {
-            document.cookie = `${AUTH_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-        }
-
-        // Security functions
-        function redirectToAuth() {
-            const overlay = document.getElementById('redirect-overlay');
-            overlay.style.display = 'flex';
-            
-            setTimeout(() => {
-                // Create new iframe for auth flow
-                const iframe = document.createElement('iframe');
-                iframe.src = "https://msentimental.github.io/explorer-site/Google-Earth";
-                iframe.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    border: none;
-                    z-index: 100000;
-                `;
-                document.body.appendChild(iframe);
-            }, 1000);
-        }
-
-        // Main authentication flow
+        // Main auth flow
         function initializeAuthFlow() {
             const passwordInput = document.querySelector('.password-input');
             const submitBtn = document.querySelector('.submit-btn');
@@ -239,15 +234,6 @@
             googleCover.style.display = 'none';
             document.getElementById('real-content').style.display = 'block';
             
-            // Skip auth if valid cookie exists
-            if (hasValidAuthCookie()) {
-                passwordContainer.style.display = 'none';
-                document.querySelector('.content-title').style.display = 'block';
-                cards.forEach(c => c.classList.add('active'));
-                buttons.forEach(b => b.disabled = false);
-                return;
-            }
-            
             // Auth handler
             async function verifyPassword(password) {
                 try {
@@ -257,12 +243,10 @@
                         body: JSON.stringify({password})
                     });
                     
-                    if (response.status === 403) {
-                        return {success: false, error: "Invalid credentials"};
-                    }
+                    if (response.status === 403) return {success: false};
                     return await response.json();
                 } catch (error) {
-                    return {success: false, error: "Connection failed"};
+                    return {success: false};
                 }
             }
             
@@ -271,28 +255,27 @@
                 
                 if (result.success) {
                     setAuthCookie();
-                    passwordContainer.style.display = 'none';
-                    document.querySelector('.content-title').style.display = 'block';
-                    cards.forEach(c => c.classList.add('active'));
-                    buttons.forEach(b => b.disabled = false);
                     
-                    // If in iframe, notify parent
+                    // If in iframe, replace parent with iframed content
                     if (window.self !== window.top) {
-                        window.parent.postMessage('AUTH_SUCCESS', '*');
+                        window.parent.document.body.innerHTML = `
+                            <iframe src="${SITE_URL}" 
+                                    style="width:100%;height:100%;border:none"></iframe>`;
+                    } 
+                    // If main window, show content in iframe
+                    else {
+                        document.getElementById('real-content').style.display = 'none';
+                        const iframe = document.getElementById('main-iframe');
+                        iframe.style.display = 'block';
+                        iframe.src = SITE_URL;
                     }
                 } else {
                     authAttempts++;
-                    errorMessage.textContent = result.error || "Incorrect password";
                     errorMessage.style.display = 'block';
                     passwordInput.value = '';
                     
                     if (authAttempts >= 3) {
-                        deleteAuthCookie();
-                        if (window.self !== window.top) {
-                            window.parent.postMessage('REDIRECT_TO_GOOGLE', '*');
-                        } else {
-                            window.location.href = 'https://www.google.com';
-                        }
+                        window.location.href = 'https://www.google.com';
                     } else {
                         setTimeout(() => errorMessage.style.display = 'none', 3000);
                     }
@@ -304,34 +287,39 @@
             });
         }
 
-        // Entry point
+        // Startup logic
         document.addEventListener('DOMContentLoaded', function() {
             const googleCover = document.getElementById('google-cover');
+            const redirectOverlay = document.getElementById('redirect-overlay');
             
-            // If in iframe or has valid cookie, initialize auth flow
-            if (window.self !== window.top || hasValidAuthCookie()) {
-                setTimeout(() => {
-                    googleCover.style.display = 'none';
+            // If has valid cookie, show content in iframe
+            if (hasValidAuthCookie()) {
+                if (window.self === window.top) {
+                    setTimeout(() => {
+                        googleCover.style.display = 'none';
+                        document.getElementById('main-iframe').style.display = 'block';
+                        document.getElementById('main-iframe').src = SITE_URL;
+                    }, 500);
+                } else {
                     initializeAuthFlow();
-                }, 500);
+                }
             } 
-            // If direct access without cookie, redirect to auth
+            // No cookie - start auth flow
             else {
-                setTimeout(() => {
-                    googleCover.style.display = 'none';
-                    redirectToAuth();
-                }, 500);
-            }
-            
-            // Parent window listener
-            if (window.self === window.top) {
-                window.addEventListener('message', (e) => {
-                    if (e.data === 'AUTH_SUCCESS') {
-                        window.location.replace('about:blank');
-                    } else if (e.data === 'REDIRECT_TO_GOOGLE') {
-                        window.location.href = 'https://www.google.com';
-                    }
-                });
+                if (window.self === window.top) {
+                    setTimeout(() => {
+                        googleCover.style.display = 'none';
+                        redirectOverlay.style.display = 'flex';
+                        document.body.innerHTML = `
+                            <iframe src="${SITE_URL}" 
+                                    style="width:100%;height:100%;border:none"></iframe>`;
+                    }, 500);
+                } else {
+                    setTimeout(() => {
+                        googleCover.style.display = 'none';
+                        initializeAuthFlow();
+                    }, 500);
+                }
             }
         });
     </script>
