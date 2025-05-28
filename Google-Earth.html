@@ -204,19 +204,28 @@
             document.cookie = `${AUTH_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
         }
 
-        // Password verification
-        async function verifyPassword(password) {
-            try {
-                const response = await fetch(AUTH_ENDPOINT, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({password})
-                });
-                return response.status === 200;
-            } catch (error) {
-                return false;
-            }
+async function verifyPassword(password) {
+    try {
+        const response = await fetch(AUTH_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ password })
+        });
+        
+        if (!response.ok) {
+            return false;
         }
+        
+        const data = await response.json();
+        return data.authenticated === true;
+    } catch (error) {
+        console.error('Auth error:', error);
+        return false;
+    }
+}
 
         // Initialize auth flow
         function initializeAuthFlow() {
