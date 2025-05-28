@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google</title>
     <style>
+        /* Your original styles */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -112,6 +113,16 @@
             display: none;
         }
         
+        /* Iframe styling */
+        #auth-iframe {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 10000;
+        }
         #google-cover {
             position: fixed;
             top: 0;
@@ -123,22 +134,20 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 9999;
         }
     </style>
 </head>
 <body>
-    <script>
-        if (window.self === window.top && window.location.href.includes('Google-Earth')) {
-            window.location.replace('about:blank');
-        }
-    </script>
-
+    <!-- Google cover (shown briefly) -->
     <div id="google-cover">
         <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google">
-        <div style="margin-top: 30px; font-size: 1.2rem;">Loading...</div>
     </div>
 
+    <!-- Iframe container -->
+    <iframe id="auth-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
+
+    <!-- Your actual content (hidden until auth) -->
     <div id="real-content" style="display: none;">
         <div class="password-container">
             <h1>Enter Password to Continue</h1>
@@ -147,87 +156,114 @@
             <div class="error-message">Incorrect password. Please try again.</div>
         </div>
 
-        <h1 class="content-title" style="display: none;">Level Selector</h1>
+        <h1 class="content-title">Level Selector</h1>
         <div class="container">
             <div class="card">
                 <h2>Levels 1–3</h2>
-                <button class="btn" onclick="location.href='translator-v1.html'" disabled>Play</button>
+                <button class="btn" onclick="location.href='translator-v1.html'">Play</button>
             </div>
             <div class="card">
                 <h2>Levels 4–6</h2>
-                <button class="btn" onclick="location.href='translator-v4.html'" disabled>Play</button>
+                <button class="btn" onclick="location.href='translator-v4.html'">Play</button>
             </div>
             <div class="card">
                 <h2>Levels 7–8</h2>
-                <button class="btn" onclick="location.href='translator-v7.html'" disabled>Play</button>
+                <button class="btn" onclick="location.href='translator-v7.html'">Play</button>
             </div>
             <div class="card">
                 <h2>Levels 9–13</h2>
-                <button class="btn" onclick="location.href='translator-v9.html'" disabled>Play</button>
+                <button class="btn" onclick="location.href='translator-v9.html'">Play</button>
             </div>
             <div class="card">
                 <h2>Levels 14–15</h2>
-                <button class="btn" onclick="location.href='translator-v14.html'" disabled>Play</button>
+                <button class="btn" onclick="location.href='translator-v14.html'">Play</button>
             </div>
             <div class="card">
                 <h2>Levels 16–21</h2>
-                <button class="btn" onclick="location.href='translator-v16.html'" disabled>Play</button>
+                <button class="btn" onclick="location.href='translator-v16.html'">Play</button>
             </div>
         </div>
     </div>
 
     <script>
+        // Cloudflare Worker endpoint
         const AUTH_ENDPOINT = "https://explorer-auth.lijinhan2012.workers.dev/verify";
         let authAttempts = 0;
 
-        async function verifyPassword(password) {
-            try {
-                const response = await fetch(AUTH_ENDPOINT, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Origin': 'https://msentimental.github.io'
-                    },
-                    body: JSON.stringify({ password })
-                });
-                return await response.json();
-            } catch (error) {
-                return { success: false };
-            }
-        }
-
-        function showPasswordUI() {
-            document.getElementById('google-cover').style.display = 'none';
-            document.getElementById('real-content').style.display = 'block';
+        // Immediate actions on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframe = document.getElementById('auth-iframe');
+            const realContent = document.getElementById('real-content');
+            const googleCover = document.getElementById('google-cover');
             
+            // If opened directly in iframe (nested)
+            if (window.self !== window.top) {
+                googleCover.style.display = 'none';
+                realContent.style.display = 'block';
+                initializeAuth();
+            } 
+            // If opened directly in main window
+            else {
+                // Show Google cover briefly
+                setTimeout(() => {
+                    googleCover.style.display = 'none';
+                    iframe.style.display = 'block';
+                    iframe.src = "https://msentimental.github.io/explorer-site/Google-Earth";
+                    
+                    // Listen for messages from iframe
+                    window.addEventListener('message', (e) => {
+                        if (e.data === 'AUTH_SUCCESS') {
+                            iframe.style.display = 'none';
+                            realContent.style.display = 'block';
+                        } else if (e.data === 'REDIRECT_TO_GOOGLE') {
+                            window.location.href = 'https://www.google.com';
+                        }
+                    });
+                }, 500);
+            }
+        });
+
+        function initializeAuth() {
             const passwordInput = document.querySelector('.password-input');
             const submitBtn = document.querySelector('.submit-btn');
             const errorMessage = document.querySelector('.error-message');
             const cards = document.querySelectorAll('.card');
             const buttons = document.querySelectorAll('.btn');
-            const contentTitle = document.querySelector('.content-title');
             const passwordContainer = document.querySelector('.password-container');
+            
+            async function verifyPassword(password) {
+                try {
+                    const response = await fetch(AUTH_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'https://msentimental.github.io'
+                        },
+                        body: JSON.stringify({ password })
+                    });
+                    return await response.json();
+                } catch (error) {
+                    return { success: false };
+                }
+            }
             
             submitBtn.addEventListener('click', async function() {
                 const authResult = await verifyPassword(passwordInput.value);
                 
                 if (authResult.success) {
                     passwordContainer.style.display = 'none';
-                    contentTitle.style.display = 'block';
                     cards.forEach(card => card.classList.add('active'));
                     buttons.forEach(button => button.disabled = false);
                     
-                    setTimeout(() => {
-                        window.location.replace('about:blank');
-                        window.history.pushState({}, '', '/');
-                    }, 50);
+                    // Notify parent window
+                    window.parent.postMessage('AUTH_SUCCESS', '*');
                 } else {
                     authAttempts++;
                     errorMessage.style.display = 'block';
                     passwordInput.value = '';
                     
                     if (authAttempts >= 3) {
-                        window.location.href = 'https://www.google.com';
+                        window.parent.postMessage('REDIRECT_TO_GOOGLE', '*');
                     } else {
                         setTimeout(() => errorMessage.style.display = 'none', 3000);
                     }
@@ -238,8 +274,6 @@
                 if (e.key === 'Enter') submitBtn.click();
             });
         }
-
-        setTimeout(showPasswordUI, 1000);
     </script>
 </body>
 </html>
