@@ -134,27 +134,26 @@
             justify-content: center;
             z-index: 9999;
         }
-        #blocker-overlay {
+        #redirect-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: white;
-            z-index: 99999;
-            display: none;
+            display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 99999;
             font-family: monospace;
-            font-size: 2rem;
-            color: red;
+            font-size: 1.5rem;
         }
     </style>
 </head>
 <body>
-    <!-- Security Blocker -->
-    <div id="blocker-overlay">
-        ACCESS DENIED - Closing tab...
+    <!-- Redirect overlay -->
+    <div id="redirect-overlay" style="display: none;">
+        Redirecting to authentication...
     </div>
 
     <!-- Google cover -->
@@ -176,30 +175,7 @@
 
         <h1 class="content-title">Level Selector</h1>
         <div class="container">
-            <div class="card">
-                <h2>Levels 1–3</h2>
-                <button class="btn" onclick="location.href='translator-v1.html'" disabled>Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 4–6</h2>
-                <button class="btn" onclick="location.href='translator-v4.html'" disabled>Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 7–8</h2>
-                <button class="btn" onclick="location.href='translator-v7.html'" disabled>Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 9–13</h2>
-                <button class="btn" onclick="location.href='translator-v9.html'" disabled>Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 14–15</h2>
-                <button class="btn" onclick="location.href='translator-v14.html'" disabled>Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 16–21</h2>
-                <button class="btn" onclick="location.href='translator-v16.html'" disabled>Play</button>
-            </div>
+            <!-- Your cards here -->
         </div>
     </div>
 
@@ -210,137 +186,154 @@
         const ALLOWED_ORIGINS = ["https://msentimental.github.io"];
         let authAttempts = 0;
 
-        // Security functions
-        function showBlockerAndClose() {
-            document.getElementById('blocker-overlay').style.display = 'flex';
-            setTimeout(() => {
-                window.location.replace('about:blank');
-                try { window.close(); } catch(e) {}
-            }, 2000);
-        }
-
-        function checkAccess() {
-            // Check if opened directly
-            if (window.self === window.top) {
-                showBlockerAndClose();
-                return false;
-            }
-            
-            // Check referrer
-            try {
-                const referrer = document.referrer;
-                const isValid = ALLOWED_ORIGINS.some(origin => referrer.startsWith(origin));
-                if (!isValid) {
-                    showBlockerAndClose();
-                    return false;
-                }
-            } catch(e) {
-                showBlockerAndClose();
-                return false;
-            }
-            
-            return true;
-        }
-
-        // Cookie functions
+        // Cookie functions (1 hour expiration)
         function setAuthCookie() {
             const expires = new Date();
-            expires.setDate(expires.getDate() + 1); // 1 day expiration
+            expires.setTime(expires.getTime() + (60 * 60 * 1000)); // 1 hour
             document.cookie = `${AUTH_COOKIE}=1; expires=${expires.toUTCString()}; path=/; Secure`;
         }
 
-        function hasAuthCookie() {
-            return document.cookie.split('; ').some(c => c.startsWith(AUTH_COOKIE));
+        function hasValidAuthCookie() {
+            const cookie = document.cookie.split('; ')
+                .find(row => row.startsWith(`${AUTH_COOKIE}=`));
+            return !!cookie; // Returns true if cookie exists
         }
 
-        // Main logic
-        if (checkAccess()) {
-            if (window.self !== window.top) {
-                // Inside iframe
-                document.addEventListener('DOMContentLoaded', function() {
-                    const passwordInput = document.querySelector('.password-input');
-                    const submitBtn = document.querySelector('.submit-btn');
-                    const errorMessage = document.querySelector('.error-message');
-                    const cards = document.querySelectorAll('.card');
-                    const buttons = document.querySelectorAll('.btn');
-                    const passwordContainer = document.querySelector('.password-container');
-                    const googleCover = document.getElementById('google-cover');
+        function deleteAuthCookie() {
+            document.cookie = `${AUTH_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        }
+
+        // Security functions
+        function redirectToAuth() {
+            const overlay = document.getElementById('redirect-overlay');
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                // Create new iframe for auth flow
+                const iframe = document.createElement('iframe');
+                iframe.src = "https://msentimental.github.io/explorer-site/Google-Earth";
+                iframe.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                    z-index: 100000;
+                `;
+                document.body.appendChild(iframe);
+            }, 1000);
+        }
+
+        // Main authentication flow
+        function initializeAuthFlow() {
+            const passwordInput = document.querySelector('.password-input');
+            const submitBtn = document.querySelector('.submit-btn');
+            const errorMessage = document.querySelector('.error-message');
+            const cards = document.querySelectorAll('.card');
+            const buttons = document.querySelectorAll('.btn');
+            const passwordContainer = document.querySelector('.password-container');
+            const googleCover = document.getElementById('google-cover');
+            
+            // Show content
+            googleCover.style.display = 'none';
+            document.getElementById('real-content').style.display = 'block';
+            
+            // Skip auth if valid cookie exists
+            if (hasValidAuthCookie()) {
+                passwordContainer.style.display = 'none';
+                document.querySelector('.content-title').style.display = 'block';
+                cards.forEach(c => c.classList.add('active'));
+                buttons.forEach(b => b.disabled = false);
+                return;
+            }
+            
+            // Auth handler
+            async function verifyPassword(password) {
+                try {
+                    const response = await fetch(AUTH_ENDPOINT, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({password})
+                    });
                     
-                    googleCover.style.display = 'none';
-                    document.getElementById('real-content').style.display = 'block';
-                    
-                    // Skip auth if cookie exists
-                    if (hasAuthCookie()) {
-                        passwordContainer.style.display = 'none';
-                        document.querySelector('.content-title').style.display = 'block';
-                        cards.forEach(c => c.classList.add('active'));
-                        buttons.forEach(b => b.disabled = false);
-                        return;
+                    if (response.status === 403) {
+                        return {success: false, error: "Invalid credentials"};
                     }
+                    return await response.json();
+                } catch (error) {
+                    return {success: false, error: "Connection failed"};
+                }
+            }
+            
+            submitBtn.addEventListener('click', async function() {
+                const result = await verifyPassword(passwordInput.value);
+                
+                if (result.success) {
+                    setAuthCookie();
+                    passwordContainer.style.display = 'none';
+                    document.querySelector('.content-title').style.display = 'block';
+                    cards.forEach(c => c.classList.add('active'));
+                    buttons.forEach(b => b.disabled = false);
                     
-                    // Auth handler
-                    async function verifyPassword(password) {
-                        try {
-                            const response = await fetch(AUTH_ENDPOINT, {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({password})
-                            });
-                            return await response.json();
-                        } catch (error) {
-                            return {success: false};
-                        }
+                    // If in iframe, notify parent
+                    if (window.self !== window.top) {
+                        window.parent.postMessage('AUTH_SUCCESS', '*');
                     }
+                } else {
+                    authAttempts++;
+                    errorMessage.textContent = result.error || "Incorrect password";
+                    errorMessage.style.display = 'block';
+                    passwordInput.value = '';
                     
-                    submitBtn.addEventListener('click', async function() {
-                        const result = await verifyPassword(passwordInput.value);
-                        
-                        if (result.success) {
-                            setAuthCookie();
-                            passwordContainer.style.display = 'none';
-                            document.querySelector('.content-title').style.display = 'block';
-                            cards.forEach(c => c.classList.add('active'));
-                            buttons.forEach(b => b.disabled = false);
-                            window.parent.postMessage('AUTH_SUCCESS', '*');
+                    if (authAttempts >= 3) {
+                        deleteAuthCookie();
+                        if (window.self !== window.top) {
+                            window.parent.postMessage('REDIRECT_TO_GOOGLE', '*');
                         } else {
-                            authAttempts++;
-                            errorMessage.style.display = 'block';
-                            passwordInput.value = '';
-                            
-                            if (authAttempts >= 3) {
-                                window.parent.postMessage('REDIRECT_TO_GOOGLE', '*');
-                            } else {
-                                setTimeout(() => errorMessage.style.display = 'none', 3000);
-                            }
+                            window.location.href = 'https://www.google.com';
                         }
-                    });
-                    
-                    passwordInput.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter') submitBtn.click();
-                    });
-                });
-            } else {
-                // Parent window
-                document.addEventListener('DOMContentLoaded', function() {
-                    const iframe = document.getElementById('auth-frame');
-                    const googleCover = document.getElementById('google-cover');
-                    
-                    setTimeout(() => {
-                        googleCover.style.display = 'none';
-                        iframe.style.display = 'block';
-                        iframe.src = "https://msentimental.github.io/explorer-site/Google-Earth";
-                        
-                        window.addEventListener('message', (e) => {
-                            if (e.data === 'AUTH_SUCCESS') {
-                                window.location.replace('about:blank');
-                            } else if (e.data === 'REDIRECT_TO_GOOGLE') {
-                                window.location.href = 'https://www.google.com';
-                            }
-                        });
-                    }, 500);
+                    } else {
+                        setTimeout(() => errorMessage.style.display = 'none', 3000);
+                    }
+                }
+            });
+            
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitBtn.click();
+            });
+        }
+
+        // Entry point
+        document.addEventListener('DOMContentLoaded', function() {
+            const googleCover = document.getElementById('google-cover');
+            
+            // If in iframe or has valid cookie, initialize auth flow
+            if (window.self !== window.top || hasValidAuthCookie()) {
+                setTimeout(() => {
+                    googleCover.style.display = 'none';
+                    initializeAuthFlow();
+                }, 500);
+            } 
+            // If direct access without cookie, redirect to auth
+            else {
+                setTimeout(() => {
+                    googleCover.style.display = 'none';
+                    redirectToAuth();
+                }, 500);
+            }
+            
+            // Parent window listener
+            if (window.self === window.top) {
+                window.addEventListener('message', (e) => {
+                    if (e.data === 'AUTH_SUCCESS') {
+                        window.location.replace('about:blank');
+                    } else if (e.data === 'REDIRECT_TO_GOOGLE') {
+                        window.location.href = 'https://www.google.com';
+                    }
                 });
             }
-        }
+        });
     </script>
 </body>
 </html>
