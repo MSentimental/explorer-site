@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Level Selector</title>
+    <title>Google</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,7 +16,6 @@
             align-items: center;
             justify-content: center;
         }
-
         h1 {
             color: #333;
             margin-bottom: 30px;
@@ -24,7 +23,6 @@
             font-size: 2.5rem;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
-
         .container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -33,7 +31,6 @@
             max-width: 1200px;
             padding: 20px;
         }
-
         .card {
             background: white;
             border-radius: 10px;
@@ -41,25 +38,21 @@
             padding: 20px;
             text-align: center;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            opacity: 0.5;
+            opacity: 0;
             pointer-events: none;
         }
-
         .card.active {
             opacity: 1;
             pointer-events: auto;
         }
-
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-
         .card h2 {
             color: #444;
             margin-top: 0;
         }
-
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -70,25 +63,21 @@
             font-size: 1rem;
             transition: all 0.3s ease;
         }
-
         .btn:hover {
             background: linear-gradient(135deg, #5a6fd1 0%, #6a4290 100%);
             transform: scale(1.05);
         }
-
         .btn:disabled {
             background: #ccc;
             cursor: not-allowed;
             transform: none;
         }
-
         .password-container {
             margin-bottom: 30px;
             text-align: center;
             width: 100%;
             max-width: 400px;
         }
-
         .password-input {
             padding: 12px 15px;
             border: 2px solid #ddd;
@@ -98,12 +87,10 @@
             box-sizing: border-box;
             transition: border 0.3s ease;
         }
-
         .password-input:focus {
             border-color: #667eea;
             outline: none;
         }
-
         .submit-btn {
             margin-top: 15px;
             width: 100%;
@@ -116,63 +103,103 @@
             font-size: 1rem;
             transition: all 0.3s ease;
         }
-
         .submit-btn:hover {
             background: linear-gradient(135deg, #3a9bec 0%, #00d9e6 100%);
         }
-
         .error-message {
             color: #e74c3c;
             margin-top: 10px;
             display: none;
         }
+        
+        #google-cover {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
-    <!-- Redirect to about:blank if accessed directly -->
     <script>
-        if(window.location.href === 'https://msentimental.github.io/explorer-site/Google-Earth') {
+        if (window.self === window.top && window.location.href.includes('Google-Earth')) {
             window.location.replace('about:blank');
         }
     </script>
 
-    <div class="password-container">
-        <h1>Enter Password to Continue</h1>
-        <input type="password" class="password-input" placeholder="Enter password...">
-        <button class="submit-btn">Submit</button>
-        <div class="error-message">Incorrect password. Please try again.</div>
+    <div id="google-cover">
+        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google">
+        <div style="margin-top: 30px; font-size: 1.2rem;">Loading...</div>
     </div>
 
-    <h1 class="content-title" style="display: none;">Level Selector</h1>
-    <div class="container">
-        <div class="card">
-            <h2>Levels 1–3</h2>
-            <button class="btn" onclick="location.href='translator-v1.html'" disabled>Play</button>
+    <div id="real-content" style="display: none;">
+        <div class="password-container">
+            <h1>Enter Password to Continue</h1>
+            <input type="password" class="password-input" placeholder="Enter password...">
+            <button class="submit-btn">Submit</button>
+            <div class="error-message">Incorrect password. Please try again.</div>
         </div>
-        <div class="card">
-            <h2>Levels 4–6</h2>
-            <button class="btn" onclick="location.href='translator-v4.html'" disabled>Play</button>
-        </div>
-        <div class="card">
-            <h2>Levels 7–8</h2>
-            <button class="btn" onclick="location.href='translator-v7.html'" disabled>Play</button>
-        </div>
-        <div class="card">
-            <h2>Levels 9–13</h2>
-            <button class="btn" onclick="location.href='translator-v9.html'" disabled>Play</button>
-        </div>
-        <div class="card">
-            <h2>Levels 14–15</h2>
-            <button class="btn" onclick="location.href='translator-v14.html'" disabled>Play</button>
-        </div>
-        <div class="card">
-            <h2>Levels 16–21</h2>
-            <button class="btn" onclick="location.href='translator-v16.html'" disabled>Play</button>
+
+        <h1 class="content-title" style="display: none;">Level Selector</h1>
+        <div class="container">
+            <div class="card">
+                <h2>Levels 1–3</h2>
+                <button class="btn" onclick="location.href='translator-v1.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 4–6</h2>
+                <button class="btn" onclick="location.href='translator-v4.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 7–8</h2>
+                <button class="btn" onclick="location.href='translator-v7.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 9–13</h2>
+                <button class="btn" onclick="location.href='translator-v9.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 14–15</h2>
+                <button class="btn" onclick="location.href='translator-v14.html'" disabled>Play</button>
+            </div>
+            <div class="card">
+                <h2>Levels 16–21</h2>
+                <button class="btn" onclick="location.href='translator-v16.html'" disabled>Play</button>
+            </div>
         </div>
     </div>
 
-     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+    <script>
+        const AUTH_ENDPOINT = "https://explorer-auth.lijinhan2012.workers.dev/verify";
+        let authAttempts = 0;
+
+        async function verifyPassword(password) {
+            try {
+                const response = await fetch(AUTH_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'https://msentimental.github.io'
+                    },
+                    body: JSON.stringify({ password })
+                });
+                return await response.json();
+            } catch (error) {
+                return { success: false };
+            }
+        }
+
+        function showPasswordUI() {
+            document.getElementById('google-cover').style.display = 'none';
+            document.getElementById('real-content').style.display = 'block';
+            
             const passwordInput = document.querySelector('.password-input');
             const submitBtn = document.querySelector('.submit-btn');
             const errorMessage = document.querySelector('.error-message');
@@ -181,47 +208,38 @@
             const contentTitle = document.querySelector('.content-title');
             const passwordContainer = document.querySelector('.password-container');
             
-            const AUTH_ENDPOINT = "https://explorer-auth.lijinhan2012.workers.dev/verify";
-            
-            async function verifyPassword(password) {
-                try {
-                    const response = await fetch(AUTH_ENDPOINT, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Origin': 'https://msentimental.github.io'
-                        },
-                        body: JSON.stringify({ password: password })
-                    });
-                    
-                    if (!response.ok) throw new Error('Auth failed');
-                    return await response.json();
-                } catch (error) {
-                    console.error("Auth error:", error);
-                    return { success: false };
-                }
-            }
-            
             submitBtn.addEventListener('click', async function() {
                 const authResult = await verifyPassword(passwordInput.value);
                 
                 if (authResult.success) {
                     passwordContainer.style.display = 'none';
                     contentTitle.style.display = 'block';
-                    
                     cards.forEach(card => card.classList.add('active'));
                     buttons.forEach(button => button.disabled = false);
+                    
+                    setTimeout(() => {
+                        window.location.replace('about:blank');
+                        window.history.pushState({}, '', '/');
+                    }, 50);
                 } else {
+                    authAttempts++;
                     errorMessage.style.display = 'block';
                     passwordInput.value = '';
-                    setTimeout(() => errorMessage.style.display = 'none', 3000);
+                    
+                    if (authAttempts >= 3) {
+                        window.location.href = 'https://www.google.com';
+                    } else {
+                        setTimeout(() => errorMessage.style.display = 'none', 3000);
+                    }
                 }
             });
             
-            passwordInput.addEventListener('keypress', function(e) {
+            passwordInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') submitBtn.click();
             });
-        });
+        }
+
+        setTimeout(showPasswordUI, 1000);
     </script>
 </body>
 </html>
