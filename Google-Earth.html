@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google</title>
     <style>
+        /* Your original CSS - completely preserved */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -111,17 +112,9 @@
             margin-top: 10px;
             display: none;
         }
-        #auth-frame {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            z-index: 10000;
-            display: none;
-        }
-        #google-cover {
+        
+        /* New overlay styles */
+        #loader {
             position: fixed;
             top: 0;
             left: 0;
@@ -132,39 +125,53 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
+            z-index: 10000;
         }
-        #redirect-overlay {
+        #auth-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: white;
-            display: flex;
-            justify-content: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: none;
+            flex-direction: column;
             align-items: center;
-            z-index: 99999;
-            font-family: monospace;
-            font-size: 1.5rem;
+            justify-content: center;
+            z-index: 10001;
+        }
+        #content-iframe {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 10002;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <!-- Redirect overlay -->
-    <div id="redirect-overlay" style="display: none;">
-        Redirecting to authentication...
+    <!-- 1. Initial loader -->
+    <div id="loader">
+        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Loading">
     </div>
 
-    <!-- Google cover -->
-    <div id="google-cover">
-        <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google">
+    <!-- 2. Authentication screen (hidden initially) -->
+    <div id="auth-screen">
+        <div class="password-container">
+            <h1>Enter Password to Continue</h1>
+            <input type="password" class="password-input" placeholder="Enter password...">
+            <button class="submit-btn">Submit</button>
+            <div class="error-message">Incorrect password. Please try again.</div>
+        </div>
     </div>
 
-    <!-- Iframe container -->
-    <iframe id="auth-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+    <!-- 3. Main content iframe (hidden initially) -->
+    <iframe id="content-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
 
-    <!-- Main content -->
+    <!-- 4. Hidden content container (for password flow) -->
     <div id="real-content" style="display:none">
         <div class="password-container">
             <h1>Enter Password to Continue</h1>
@@ -173,9 +180,9 @@
             <div class="error-message">Incorrect password. Please try again.</div>
         </div>
 
-        <h1 class="content-title">Level Selector</h1>
+        <h1 class="content-title" style="display:none;">Level Selector</h1>
         <div class="container">
-                      <div class="card">
+            <div class="card">
                 <h2>Levels 1–3</h2>
                 <button class="btn" onclick="location.href='translator-v1.html'" disabled>Play</button>
             </div>
@@ -204,9 +211,9 @@
 
     <script>
         // Configuration
-        const AUTH_COOKIE = "explorer_auth_v2";
+        const AUTH_COOKIE = "explorer_auth_final";
         const AUTH_ENDPOINT = "https://explorer-auth.lijinhan2012.workers.dev/verify";
-        const SITE_URL = "https://msentimental.github.io/explorer-site/Google-Earth";
+        const SITE_URL = window.location.href; // Self-referential
         let authAttempts = 0;
 
         // Cookie functions (1 hour expiration)
@@ -220,61 +227,65 @@
             return document.cookie.split('; ').some(row => row.startsWith(`${AUTH_COOKIE}=`));
         }
 
-        // Main auth flow
+        function deleteAuthCookie() {
+            document.cookie = `${AUTH_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        }
+
+        // Auth flow functions
+        function showAuthScreen() {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('auth-screen').style.display = 'flex';
+        }
+
+        function showContent() {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('content-iframe').style.display = 'block';
+            document.getElementById('content-iframe').src = SITE_URL;
+        }
+
+        // Password verification
+        async function verifyPassword(password) {
+            try {
+                const response = await fetch(AUTH_ENDPOINT, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({password})
+                });
+                return response.status === 200 ? {success: true} : {success: false};
+            } catch (error) {
+                return {success: false};
+            }
+        }
+
+        // Initialize auth flow
         function initializeAuthFlow() {
             const passwordInput = document.querySelector('.password-input');
             const submitBtn = document.querySelector('.submit-btn');
             const errorMessage = document.querySelector('.error-message');
-            const cards = document.querySelectorAll('.card');
-            const buttons = document.querySelectorAll('.btn');
-            const passwordContainer = document.querySelector('.password-container');
-            const googleCover = document.getElementById('google-cover');
-            
-            // Show content
-            googleCover.style.display = 'none';
-            document.getElementById('real-content').style.display = 'block';
-            
-            // Auth handler
-            async function verifyPassword(password) {
-                try {
-                    const response = await fetch(AUTH_ENDPOINT, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({password})
-                    });
-                    
-                    if (response.status === 403) return {success: false};
-                    return await response.json();
-                } catch (error) {
-                    return {success: false};
-                }
-            }
             
             submitBtn.addEventListener('click', async function() {
                 const result = await verifyPassword(passwordInput.value);
                 
                 if (result.success) {
                     setAuthCookie();
+                    document.getElementById('auth-screen').style.display = 'none';
+                    document.getElementById('loader').style.display = 'flex';
                     
-                    // If in iframe, replace parent with iframed content
-                    if (window.self !== window.top) {
-                        window.parent.document.body.innerHTML = `
-                            <iframe src="${SITE_URL}" 
-                                    style="width:100%;height:100%;border:none"></iframe>`;
-                    } 
-                    // If main window, show content in iframe
-                    else {
-                        document.getElementById('real-content').style.display = 'none';
-                        const iframe = document.getElementById('main-iframe');
-                        iframe.style.display = 'block';
-                        iframe.src = SITE_URL;
-                    }
+                    setTimeout(() => {
+                        if (window.self !== window.top) {
+                            window.parent.postMessage('AUTH_SUCCESS', '*');
+                        } else {
+                            showContent();
+                            window.history.replaceState({}, '', 'about:blank');
+                        }
+                    }, 250);
                 } else {
                     authAttempts++;
                     errorMessage.style.display = 'block';
                     passwordInput.value = '';
                     
                     if (authAttempts >= 3) {
+                        deleteAuthCookie();
                         window.location.href = 'https://www.google.com';
                     } else {
                         setTimeout(() => errorMessage.style.display = 'none', 3000);
@@ -289,39 +300,49 @@
 
         // Startup logic
         document.addEventListener('DOMContentLoaded', function() {
-            const googleCover = document.getElementById('google-cover');
-            const redirectOverlay = document.getElementById('redirect-overlay');
-            
-            // If has valid cookie, show content in iframe
-            if (hasValidAuthCookie()) {
-                if (window.self === window.top) {
+            setTimeout(() => {
+                if (hasValidAuthCookie()) {
+                    // Already authenticated
                     setTimeout(() => {
-                        googleCover.style.display = 'none';
-                        document.getElementById('main-iframe').style.display = 'block';
-                        document.getElementById('main-iframe').src = SITE_URL;
-                    }, 500);
+                        if (window.self === window.top) {
+                            // Main window - show content in iframe
+                            showContent();
+                            window.history.replaceState({}, '', 'about:blank');
+                        } else {
+                            // Iframe - show content directly
+                            document.getElementById('real-content').style.display = 'block';
+                            document.querySelector('.content-title').style.display = 'block';
+                            document.querySelectorAll('.card').forEach(c => c.classList.add('active'));
+                            document.querySelectorAll('.btn').forEach(b => b.disabled = false);
+                        }
+                    }, 250);
                 } else {
-                    initializeAuthFlow();
-                }
-            } 
-            // No cookie - start auth flow
-            else {
-                if (window.self === window.top) {
-                    setTimeout(() => {
-                        googleCover.style.display = 'none';
-                        redirectOverlay.style.display = 'flex';
+                    // Needs authentication
+                    if (window.self === window.top) {
+                        // Main window - create auth iframe
                         document.body.innerHTML = `
                             <iframe src="${SITE_URL}" 
                                     style="width:100%;height:100%;border:none"></iframe>`;
-                    }, 500);
-                } else {
-                    setTimeout(() => {
-                        googleCover.style.display = 'none';
+                    } else {
+                        // Iframe - show auth screen
+                        showAuthScreen();
                         initializeAuthFlow();
-                    }, 500);
+                    }
                 }
-            }
+            }, 500);
         });
+
+        // Parent window listener for iframe messages
+        if (window.self === window.top) {
+            window.addEventListener('message', (e) => {
+                if (e.data === 'AUTH_SUCCESS') {
+                    document.body.innerHTML = `
+                        <iframe src="${SITE_URL}" 
+                                style="width:100%;height:100%;border:none"></iframe>`;
+                    window.history.replaceState({}, '', 'about:blank');
+                }
+            });
+        }
     </script>
 </body>
 </html>
