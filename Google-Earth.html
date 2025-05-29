@@ -66,74 +66,6 @@
             margin-top: 10px;
             display: none;
         }
-        
-        /* Your original card styles */
-        #real-content {
-            display: none;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        
-        .container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            width: 100%;
-            max-width: 1200px;
-            padding: 20px;
-            margin: 0 auto;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            opacity: 0.5;
-            pointer-events: none;
-        }
-        
-        .card.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .card h2 {
-            color: #444;
-            margin-top: 0;
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .btn:hover {
-            background: linear-gradient(135deg, #5a6fd1 0%, #6a4290 100%);
-            transform: scale(1.05);
-        }
-        
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
     </style>
 </head>
 <body>
@@ -149,37 +81,6 @@
             <input type="password" class="password-input" placeholder="">
             <button class="submit-btn">SUBMIT</button>
             <div class="error-message">Incorrect password</div>
-        </div>
-    </div>
-
-    <!-- 3. Hidden content container (your original cards) -->
-    <div id="real-content" style="display: none;">
-        <h1 class="content-title">Level Selector</h1>
-        <div class="container">
-            <div class="card">
-                <h2>Levels 1–3</h2>
-                <button class="btn" onclick="location.href='translator-v1.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 4–6</h2>
-                <button class="btn" onclick="location.href='translator-v4.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 7–8</h2>
-                <button class="btn" onclick="location.href='translator-v7.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 9–13</h2>
-                <button class="btn" onclick="location.href='translator-v9.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 14–15</h2>
-                <button class="btn" onclick="location.href='translator-v14.html'">Play</button>
-            </div>
-            <div class="card">
-                <h2>Levels 16–21</h2>
-                <button class="btn" onclick="location.href='translator-v16.html'">Play</button>
-            </div>
         </div>
     </div>
 
@@ -204,28 +105,69 @@
             document.cookie = `${AUTH_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
         }
 
-async function verifyPassword(password) {
-    try {
-        const response = await fetch(AUTH_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ password })
-        });
-        
-        if (!response.ok) {
-            return false;
+        async function verifyPassword(password) {
+            try {
+                const response = await fetch(AUTH_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ password })
+                });
+                
+                if (!response.ok) {
+                    return false;
+                }
+                
+                const data = await response.json();
+                return data.authenticated === true;
+            } catch (error) {
+                console.error('Auth error:', error);
+                return false;
+            }
         }
-        
-        const data = await response.json();
-        return data.authenticated === true;
-    } catch (error) {
-        console.error('Auth error:', error);
-        return false;
-    }
-}
+
+        function openContentInNewTab() {
+            // Create new tab with about:blank
+            const newTab = window.open('about:blank', '_blank');
+            
+            // Close current tab after delay
+            setTimeout(() => {
+                window.location.href = 'https://www.google.com';
+            }, 50);
+            
+            // Load minimal content in new tab
+            setTimeout(() => {
+                newTab.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Loading...</title>
+                        <style>
+                            body {
+                                margin: 0;
+                                padding: 0;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div>Loading content...</div>
+                        <script>
+                            setTimeout(function() {
+                                location.href = '${window.location.href}';
+                            }, 50);
+                        <\/script>
+                    </body>
+                    </html>
+                `);
+            }, 100);
+        }
 
         // Initialize auth flow
         function initializeAuthFlow() {
@@ -238,38 +180,7 @@ async function verifyPassword(password) {
                 
                 if (isValid) {
                     setAuthCookie();
-                    
-                    // Create new tab with about:blank
-                    const newTab = window.open('about:blank', '_blank');
-                    
-                    // Close current tab after delay
-                    setTimeout(() => {
-                        window.location.href = 'https://www.google.com';
-                    }, 50);
-                    
-                    // Load minimal content in new tab
-                    setTimeout(() => {
-                        newTab.document.write(`
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>Content</title>
-                                <link rel="stylesheet" href="${window.location.href}">
-                            </head>
-                            <body>
-                                <div id="real-content">
-                                    <!-- Your card content will be loaded here -->
-                                </div>
-                                <script>
-                                    // Reload to actual content page
-                                    setTimeout(() => {
-                                        location.href = '${window.location.href}';
-                                    }, 50);
-                                <\/script>
-                            </body>
-                            </html>
-                        `);
-                    }, 100);
+                    openContentInNewTab();
                 } else {
                     authAttempts++;
                     errorMessage.style.display = 'block';
@@ -293,17 +204,8 @@ async function verifyPassword(password) {
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 if (hasValidAuthCookie()) {
-                    // Already authenticated - show content directly
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('real-content').style.display = 'block';
-                    
-                    // Activate cards
-                    document.querySelectorAll('.card').forEach(card => {
-                        card.classList.add('active');
-                    });
-                    document.querySelectorAll('.btn').forEach(btn => {
-                        btn.disabled = false;
-                    });
+                    // If already authenticated, immediately open content in new tab
+                    openContentInNewTab();
                 } else {
                     // Needs authentication
                     document.getElementById('loader').style.display = 'none';
